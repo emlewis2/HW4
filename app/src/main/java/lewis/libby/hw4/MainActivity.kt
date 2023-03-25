@@ -103,8 +103,8 @@ fun Graph(
 ) {
     with(LocalDensity.current) {
 
-//        Log.d("Width", screenWidth.toString())
-//        Log.d("Height", screenHeight.toString())
+        Log.d("Width", screenWidth.toString())
+        Log.d("Height", screenHeight.toString())
 
 
 //        val shapeSizePx = shapeSizeDp.toPx()
@@ -229,7 +229,7 @@ fun Graph(
 //                            val shapeSizePx = shapeBoxSizePx
 //                            Log.d("Shape Size", shapeSizePx.toString())
 //                            val shapeOutlineWidthPx = 3.dp.toPx()
-                            val shapeOffsetPx = (boxSize - shapeSize)/2
+                            val shapeOffset = (boxSize - shapeSize)/2
 //                            val radius = shapeSizePx / 2
 //
                             val outline = Stroke(8f)
@@ -260,7 +260,7 @@ fun Graph(
                             shapes.forEach {
                                 val outlineColor = Color.Black
                                 when (it.shapeType) {
-                                    Circle -> drawCircle(it.offset.x, it.offset.y, outlineColor, shapeOffsetPx, shapeCenter, radius, outline)
+                                    Circle -> drawCircle(it.offset.x, it.offset.y, outlineColor, shapeOffset, shapeCenter, radius, outline)
 //                                    Circle -> drawCircle(it.offset.x, it.offset.y, outlineColor)
                                 }
                             }
