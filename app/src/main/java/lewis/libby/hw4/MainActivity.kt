@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -25,8 +26,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.*
 import lewis.libby.hw4.ui.theme.HW4Theme
 import kotlin.math.min
+import kotlin.math.sqrt
 
 class MainActivity : ComponentActivity() {
     private val viewModel by viewModels<GemViewModel>()
@@ -46,35 +49,52 @@ class MainActivity : ComponentActivity() {
 }
 
 data class Handlers(
-    val onClickScore: (points: Int) -> Unit
+    val onAddScore: (points: Int) -> Unit,
+    val gameLogic: (shapeList: List<Shape>) -> Unit,
 )
 
 @Composable
 fun Ui(
     viewModel: GemViewModel
 ) {
+    val scope = rememberCoroutineScope()
     val score = viewModel.score.collectAsState(initial = 0).value
-    val shapes = viewModel.shapes.collectAsState(initial = emptyList()).value
+    val shapes = viewModel.shapes.collectAsState(initial = List(64){Empty}).value
+
+//    val location = shapeIndex(0, 0)
+//    val test = shapes[1, 1]
+//    Log.d("Test above", test.toString())
 
     val handlers = remember(viewModel) {
         Handlers(
-            onClickScore = { viewModel.increaseScore(it) }
+            onAddScore = { viewModel.increaseScore(it) },
+            gameLogic = {shapeList ->
+                    scope.launch {
+                        viewModel.gameLogic(shapeList)
+                    }
+            }
         )
     }
 
     Graph(
+        scope = scope,
         score = score,
         shapes = shapes,
         handlers = handlers,
+        updateGems = viewModel::updateGems,
 //        updateShapes = viewModel::updateShapes,
         modifier = Modifier.fillMaxSize()
     )
+
+//    handlers.gameLogic(shapes)
 }
 
 @Composable
 fun Graph(
+    scope: CoroutineScope,
     score: Int,
     shapes: List<Shape>,
+    updateGems: (List<Shape>) -> Unit,
     handlers: Handlers,
 //    updateShapes: (newShapes: List<Shape>) -> Unit,
     modifier: Modifier
@@ -82,6 +102,7 @@ fun Graph(
     with(LocalDensity.current) {
 
 //        const val NUMBER_OF_ROWS = 8
+//        val scope = rememberCoroutineScope()
 
         fun DrawScope.drawCircle(x: Float, y: Float, outlineColor: Color, shapeOffsetPx: Float, shapeCenter: Offset, radius: Float, outline: DrawStyle) {
             translate(x + shapeOffsetPx, y + shapeOffsetPx) {
@@ -89,6 +110,13 @@ fun Graph(
                 drawCircle(color = outlineColor, center = shapeCenter, radius = radius, style = outline)
             }
         }
+
+//        val testList = List(5) {Circle}
+//        val currentPosition = testList[0,0]
+//        Log.d("Test", currentPosition.toString())
+
+//        val currentPosition = shapes[0, 0]
+//        Log.d("Current Position", currentPosition.toString())
 
 //        fun DrawScope.drawCircle(x: Float, y: Float, outlineColor: Color) {
 //            translate(x + shapeOffsetPx, y + shapeOffsetPx) {
@@ -103,7 +131,7 @@ fun Graph(
                     title = { Text(stringResource(R.string.title)) },
                     actions = {
                         IconButton(
-                            onClick = { handlers.onClickScore(5) }
+                            onClick = { handlers.onAddScore(5) }
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Add,
@@ -183,16 +211,83 @@ fun Graph(
                                 size.toIntSize(), layoutDirection
                             )
 
+//                            val currentPosition = shapes.get(0, 0)
+//                            Log.d("Current Position", currentPosition.toString())
+
+                            val outlineColor = Color.Black
+
+//                            var newList = shapes.replaceEmptiesWithRandoms()
+
+//                            if (!scope.isActive){
+//                                handlers.gameLogic(shapes, scope)
+//                            }
+//                            handlers.gameLogic(shapes, scope)
+//                            Log.d("New List", newList.toString())
+//                            scope.launch{
+//                                while(newList.matches.isNotEmpty()) {
+//                                    Log.d("Matches", newList.matches.toString())
+//                                    val removedMatches = newList.removeMatches(newList.matches)
+//                                    delay(500)
+//                                    Log.d("Removed", removedMatches.toString())
+//                                    val shifted = removedMatches.shiftDown()
+//                                    delay(500)
+//                                    Log.d("Shifted", shifted.toString())
+//                                    val filled = shifted.replaceEmptiesWithRandoms()
+//                                    delay(500)
+//                                    Log.d("Filled", filled.toString())
+//                                    newList = filled
+//                                    Log.d("Final", newList.toString())
+//                                }
+//                            }
+//                            updateGems(newList)
+                            var newList = shapes.replaceEmptiesWithRandoms()
+                            Log.d("New List", newList.toString())
+
+                            while(newList.matches.isNotEmpty()) {
+                                Log.d("Matches", newList.matches.toString())
+                                handlers.onAddScore(newList.matches.size)
+                                val removedMatches = newList.removeMatches(newList.matches)
+                                Log.d("Removed", removedMatches.toString())
+                                val shifted = removedMatches.shiftDown()
+                                Log.d("Shifted", shifted.toString())
+                                val filled = shifted.replaceEmptiesWithRandoms()
+                                Log.d("Filled", filled.toString())
+                                newList = filled
+                                Log.d("Final", newList.toString())
+                            }
+                            updateGems(newList)
+
+//                            val newList = List(64){Circle}
+//                            val matches = newList.matches
+//                            val removedMatches = newList.removeMatches(matches)
+//                            Log.d("Matches", matches.toString())
+//                            Log.d("Removed", removedMatches.toString())
+//                            val shifted = removedMatches.shiftDown()
+//                            Log.d("")
+//                            updateGems(newList)
+
+
                             translate(alignOffset.x.toFloat(), alignOffset.y.toFloat()) {
-                                for (i in 0 until 8) {
-                                    for (j in 0 until 8) {
+                                for (row in 0 until 8) {
+                                    for (column in 0 until 8) {
                                         translate(
-                                            left = j * boxSize,
-                                            top = i * boxSize
+                                            left = row * boxSize,
+                                            top = column * boxSize
                                         ) {
-                                            Log.d("Inside", i.toString())
-                                            drawRect(color = Color.Blue, size = Size(boxSize, boxSize))
-                                            drawCircle(color = Color.Green, center = shapeCenter, radius = radius)
+//                                            Log.d("Inside", row.toString())
+//                                            val currentPosition = shapes.get(row, column)
+//                                            Log.d("Shape", currentPosition.toString())
+                                            when(shapes[row+1, column+1]) {
+                                                Circle -> drawCircle(color = Color.Yellow, center = shapeCenter, radius = radius)
+                                                Square ->  drawRect(color = Color.Blue, size = Size(shapeSize, shapeSize), topLeft = Offset(shapeOffset, shapeOffset))
+                                                Diamond -> drawRect(color = Color.Red, size = Size(shapeSize, shapeSize), topLeft = Offset(shapeOffset, shapeOffset))
+                                                Cross -> drawCircle(color = Color.Green, center = shapeCenter, radius = radius)
+                                                Empty -> {}
+                                            }
+//                                            Log.d("Inside", row.toString())
+//                                            drawRect(color = Color.Blue, size = Size(shapeSize, shapeSize), topLeft = Offset(shapeOffset, shapeOffset))
+//                                            drawCircle(color = Color.Green, center = shapeCenter, radius = radius)
+
                                         }
                                     }
                                 }
@@ -207,11 +302,25 @@ fun Graph(
 ////                                    Circle -> drawCircle(it.offset.x, it.offset.y, outlineColor)
 //                                }
 //                            }
-                            Log.d("Original Shapes", shapes.toString())
-                            val newList = shapes.replaceEmptiesWithRandoms()
-                            Log.d("New List", newList.toString())
+//                            Log.d("Original Shapes", shapes.toString())
+//                            var newList = shapes.replaceEmptiesWithRandoms()
+//                            while(newList.matches.isNotEmpty()) {
+//                                val removedMatches = newList.removeMatches(newList.matches)
+//                                val shifted = removedMatches.shiftDown()
+//                                val filled = shifted.replaceEmptiesWithRandoms()
+//                                newList = filled
+//                            }
+//                            Log.d("New List", newList.toString())
 //                            updateShapes(newList)
-                            Log.d("Shapes", shapes.toString())
+//                            Log.d("Shapes", shapes.toString())
+
+//                            val removedMatches = newList.removeMatches(newList.matches)
+
+//                            val shifted = removedMatches.shiftDown()
+
+//                            updateGems(newList)
+//                            Log.d("Updated Gems", shapes.toString())
+
 
 //                            newList.forEach {
 //                                val outlineColor = Color.Black

@@ -4,6 +4,7 @@ package lewis.libby.hw4
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.geometry.Offset
+import kotlinx.coroutines.delay
 import kotlin.random.Random // (must be at top of file after package statement)
 
 /**
@@ -56,6 +57,8 @@ fun shapeIndex(row: Int, column: Int): Int {
  * two-dimensional-array like access
  */
 operator fun List<Shape>.get(row: Int, column: Int) = this[shapeIndex(row, column)]
+
+//fun List<Shape>.getShape(row: Int, column: Int) = this.get(shapeIndex(0, 0))
 
 /**
  * "Set" operator that allows us to use `shapes[row, column] = shape` for more natural
@@ -169,13 +172,14 @@ fun List<Shape>.shiftDown(): List<Shape> {
 /**
  * Create a copy of the gem list that has [Empty] gems where matching gems were
  */
-fun List<Shape>.removeMatches(matches: Set<Int>) =
+ fun List<Shape>.removeMatches(matches: Set<Int>) =
     mapIndexed { n, existingShape ->
         if (n in matches) {
             Empty
         } else {
             existingShape
         }
+//        delay(500)
     }
 
 /**
