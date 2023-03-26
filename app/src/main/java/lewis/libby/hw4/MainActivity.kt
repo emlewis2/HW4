@@ -60,6 +60,10 @@ data class Handlers(
 //    val onDrag: (Offset) -> Unit,
 //    val onDragEnd: () -> Unit,
     val onHighLightShape: (finger: Offset, size: Float) -> Unit,
+    val onDragStart: (finger: Offset, size: Float) -> Unit,
+    val onDrag: (Offset) -> Unit,
+    val onDragEnd: (offset: Offset, size: Float) -> Unit,
+    val onPause: () -> Unit
 )
 
 @Composable
@@ -90,7 +94,11 @@ fun Ui(
                 scope.launch{
                     viewModel.highlightShape(finger, size)
                 }
-            }
+            },
+            onDragStart = { finger, size -> viewModel.startDrag(finger, size) },
+            onDrag = { offset -> viewModel.drag(offset) },
+            onDragEnd = { offset, size -> viewModel.endDrag(offset, size) },
+            onPause = { viewModel.onPause() }
         )
     }
 
@@ -199,10 +207,32 @@ fun Graph(
                                         onTap = {
                                             Log.d("OnTap", "")
                                             finger = it
-                                            handlers.onHighLightShape(
-                                                finger, min(size.width, size.height)/10f
-                                            )
-                                        }
+                                            val boxSize = min(size.width, size.height)/10f
+                                            if ((it.x < boxSize) || (it.x > 9*boxSize)) {
+                                                Log.d("x", "")
+                                                handlers.onPause()
+                                            } else if ((it.y > boxSize*8)){
+                                                Log.d("y", "")
+                                                handlers.onPause()
+                                            } else {
+                                                handlers.onHighLightShape(
+                                                    finger, boxSize
+                                                )
+                                            }
+                                        },
+                                        onDragStart = { offset ->
+                                            handlers.onDragStart(offset, min(size.width, size.height)/10f)
+                                        },
+                                        onDrag = { change, _ ->
+                                            finger = change.position
+                                            handlers.onDrag(change.position)
+                                        },
+                                        onDragEnd = {
+                                            handlers.onDragEnd(finger, min(size.width, size.height)/10f)
+                                        },
+                                        onDragCancel = {
+                                            handlers.onDragEnd(finger, min(size.width, size.height)/10f)
+                                        },
                                     )
                                 }
 //                                .height(100.dp)
@@ -233,16 +263,21 @@ fun Graph(
                                 color = Color.Red,
                             )
 
-                            fun Size.toIntSize(): IntSize = IntSize(width.toInt(), height.toInt())
-
-                            val contentAlignment = Alignment.Center
-                            val alignOffset = contentAlignment.align(
-                                Size(
-                                    8 * boxSize,
-                                    8 * boxSize
-                                ).toIntSize(),
-                                size.toIntSize(), layoutDirection
-                            )
+//                            fun Size.toIntSize(): IntSize = IntSize(width.toInt(), height.toInt())
+//
+//                            val contentAlignment = Alignment.CenterHorizontally
+////                            val alignOffset = contentAlignment.align(
+////                                Size(
+////                                    8 * boxSize,
+////                                    8 * boxSize
+////                                ).toIntSize(),
+////                                size.toIntSize(), layoutDirection
+////                            )
+//                            val alignOffset = contentAlignment.align(
+//                                size = size.width.toInt(),
+//                                space = size.width.toInt(),
+//                                layoutDirection = layoutDirection
+//                            )
 
 //                            val currentPosition = shapes.get(0, 0)
 //                            Log.d("Current Position", currentPosition.toString())
@@ -275,6 +310,7 @@ fun Graph(
 //                            updateGems(newList)
                             var newList = shapes.replaceEmptiesWithRandoms()
                             Log.d("New List", newList.toString())
+                            Log.d("Matches Outside", newList.matches.toString())
 
                             while(newList.matches.isNotEmpty()) {
                                 Log.d("Matches", newList.matches.toString())
@@ -300,7 +336,7 @@ fun Graph(
 //                            updateGems(newList)
 
 
-                            translate(alignOffset.x.toFloat(), alignOffset.y.toFloat()) {
+                            translate(boxSize, 0f) {
                                 for (row in 0 until 8) {
                                     for (column in 0 until 8) {
                                         translate(

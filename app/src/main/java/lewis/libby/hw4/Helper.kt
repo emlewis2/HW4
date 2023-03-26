@@ -92,18 +92,18 @@ val List<Shape>.matches: Set<Int>
         (1..NUMBER_OF_ROWS).forEach { i ->
             (1..NUMBER_OF_ROWS - 2).forEach { j ->
                 // check horizontal
-                val shape1Horizontal = this[i, j]
-                val shape2Horizontal = this[i, j + 1]
-                val shape3Horizontal = this[i, j + 2]
+                val shape1Horizontal = this[i, j].shapeType
+                val shape2Horizontal = this[i, j + 1].shapeType
+                val shape3Horizontal = this[i, j + 2].shapeType
                 if (shape1Horizontal == shape2Horizontal && shape1Horizontal == shape3Horizontal) {
                     matches.add(shapeIndex(i, j))
                     matches.add(shapeIndex(i, j + 1))
                     matches.add(shapeIndex(i, j + 2))
                 }
                 // check vertical
-                val shape1Vertical = this[j, i]
-                val shape2Vertical = this[j+1, i]
-                val shape3Vertical = this[j+2, i]
+                val shape1Vertical = this[j, i].shapeType
+                val shape2Vertical = this[j+1, i].shapeType
+                val shape3Vertical = this[j+2, i].shapeType
                 if (shape1Vertical == shape2Vertical && shape1Vertical == shape3Vertical) {
                     matches.add(shapeIndex(j, i))
                     matches.add(shapeIndex(j+1, i))

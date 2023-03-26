@@ -60,9 +60,9 @@ class GemViewModel: ViewModel() {
 //    }
 
     fun updateGems(newList: List<Shape>) {
-        Log.d("In Update Gems", "")
+//        Log.d("In Update Gems", "")
         _shapes.update{newList}
-        Log.d("In Update Gems Updated", _shapes.value.toString())
+//        Log.d("In Update Gems Updated", _shapes.value.toString())
     }
 
     suspend fun gameLogic(shapeList: List<Shape>) = withContext(Dispatchers.Default) {
@@ -94,23 +94,80 @@ class GemViewModel: ViewModel() {
 
     private var dragShape: Shape? = null
     private var dragShapeOffset: Offset = Offset.Zero
+    private var dragShapeRow: Int = 0
+    private var dragShapeColumn: Int = 0
 
-//    fun startDrag(finger: Offset, size: Float) {
-//        // Find at can return null if clicked where no shape, but just sets dragShape to null and nothing happens
-//        // Using apply so that if something is found, then dragShapeOffset is changed
+    fun startDrag(finger: Offset, size: Float) {
+        // Find at can return null if clicked where no shape, but just sets dragShape to null and nothing happens
+        // Using apply so that if something is found, then dragShapeOffset is changed
 //        dragShape = _shapes.value.findAt(finger, size)?.apply {
 ////            dragShapeOffset = finger - offset
 //            dragShapeOffset = finger
 //        }
-//    }
 
-//    fun drag(offset: Offset) {
-//        dragShape?.let { shape ->
-//            val newShape = shape.copy(offset = offset - dragShapeOffset)
+        Log.d("In startDrag", "")
+        Log.d("finger", finger.toString())
+        val intOffsetX = finger.x.toInt()
+        Log.d("intX", intOffsetX.toString())
+        val intOffsetY = finger.y.toInt()
+        Log.d("intY", intOffsetY.toString())
+        val row = intOffsetX / size.toInt()
+        Log.d("row", row.toString())
+        val column = intOffsetY / size.toInt()
+        Log.d("column", column.toString())
+        if (row in 1..8 && column >= 0 && column <= 7) {
+            _shapes.value[row, column+1].let { shape ->
+                dragShape = shape
+                dragShapeOffset = finger
+                dragShapeRow = row
+                dragShapeColumn = column
+            }
+        }
+    }
+
+    fun drag(offset: Offset) {
+        dragShape?.let { shape ->
+            val newShape = shape.copy(offset = offset - dragShapeOffset)
+
 //            _shapes.value = _shapes.value - shape + newShape
-//            dragShape = newShape    // Need to update to newShape as the new instance or else are never removing the new shapes that are added
-//        }
-//    }
+            dragShape = newShape    // Need to update to newShape as the new instance or else are never removing the new shapes that are added
+        }
+    }
+
+    fun endDrag(offset: Offset, size: Float) {
+        if (dragShapeColumn == 8) {
+            val rightBound = size*(dragShapeColumn+1)
+        } else {
+            val rightBound = size*(dragShapeColumn+2)
+        }
+        if (dragShapeColumn == 1) {
+            val leftBound = size*(dragShapeColumn)
+        } else {
+            val leftBound = size*(dragShapeColumn-1)
+        }
+        if (dragShapeRow == 1) {
+//            val topBound = size*
+        }
+        Log.d("In highlight", "")
+        Log.d("finger", offset.toString())
+        val intOffsetX = offset.x.toInt()
+        Log.d("intX", intOffsetX.toString())
+        val intOffsetY = offset.y.toInt()
+        Log.d("intY", intOffsetY.toString())
+        val row = intOffsetX / size.toInt()
+        Log.d("row", row.toString())
+        val column = intOffsetY / size.toInt()
+        Log.d("column", column.toString())
+        if (row in 1..8 && column >= 0 && column <= 7) {
+            _shapes.value[row, column+1].let { shape ->
+                Log.d("DragShape", dragShape?.shapeType.toString())
+                _shapes.value = _shapes.value.replace(row, column+1, dragShape ?: Shape(Empty, Offset.Zero))
+                _shapes.value = _shapes.value.replace(dragShapeRow, dragShapeColumn+1, shape)
+                Log.d("Other Shape", shape.shapeType.toString())
+            }
+        }
+        dragShape = null
+    }
 
     private fun List<Shape>.findAt(offset:Offset, shapeBoxSizePx: Float) =
         reversed().find { shape ->
@@ -128,16 +185,17 @@ class GemViewModel: ViewModel() {
         Log.d("finger", finger.toString())
         val intOffsetX = finger.x.toInt()
         Log.d("intX", intOffsetX.toString())
-        val intOffsetY = finger.y.toInt()
+        val intOffsetY= finger.y.toInt()
         Log.d("intY", intOffsetY.toString())
         val row = intOffsetX / size.toInt()
         Log.d("row", row.toString())
         val column = intOffsetY / size.toInt()
         Log.d("column", column.toString())
-        if (row in 1..8 && column > 0 && column < 9) {
-            _shapes.value[row, column-2].let {shape ->
+        if (row in 1..8 && column >= 0 && column <= 7) {
+            _shapes.value[row, column+1].let {shape ->
                 repeat(3) {
                     Log.d("Shape: ", shape.toString())
+//                    Log.d("Location: ", _shapes.value[row+1, column].toString())
                     _highlightShapeType.value = shape.shapeType
                     Log.d("Next", _highlightShapeType.value.toString())
                     delay(500)
@@ -148,16 +206,10 @@ class GemViewModel: ViewModel() {
                 }
             }
         }
-//        _shapes.value.findAt(finger, size)?.let { shape ->
-//            repeat(3) {
-//                Log.d("Shape: ", shape.toString())
-//                _highlightShapeType.value = shape.shapeType
-//                delay(200)
-//                _highlightShapeType.value = null
-//                if (it != 2) {
-//                    delay(200)
-//                }
-//            }
-//        }
+    }
+
+    fun onPause() {
+        val yes = "hi"
+        Log.d("On Pause", yes)
     }
 }
