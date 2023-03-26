@@ -21,18 +21,18 @@ const val NUMBER_OF_ROWS = 8
  * You need to define your own shapes rather than the ones I have below, but be sure to keep
  *    [Empty]
  */
-sealed interface Shape
-object Square: Shape
-object Circle: Shape
-object Cross: Shape
-object Diamond: Shape
-object Empty: Shape
+sealed interface ShapeType
+object Square: ShapeType
+object Circle: ShapeType
+object Cross: ShapeType
+object Diamond: ShapeType
+object Empty: ShapeType
 
-//@Immutable
-//data class Shape(
-//    val shapeType: Shape,
-//    val offset: Offset
-//)
+@Immutable
+data class Shape(
+    val shapeType: ShapeType,
+    val offset: Offset
+)
 
 // Removed Shape Types to put in separate file
 
@@ -155,10 +155,10 @@ fun List<Shape>.shiftDown(): List<Shape> {
     for(column in 1..NUMBER_OF_ROWS) {
         for(row in NUMBER_OF_ROWS downTo 2) { // if top is empty, nothing to move into it...
             val shape = mutable[row, column]
-            if (shape == Empty) {
+            if (shape.shapeType == Empty) {
                 // find first non-empty above it and swap
                 for(above in row-1 downTo 1) {
-                    if (mutable[above, column] != Empty) {
+                    if (mutable[above, column].shapeType != Empty) {
                         mutable.swapMutable(row, column, above, column)
                         break
                     }
@@ -175,7 +175,7 @@ fun List<Shape>.shiftDown(): List<Shape> {
  fun List<Shape>.removeMatches(matches: Set<Int>) =
     mapIndexed { n, existingShape ->
         if (n in matches) {
-            Empty
+            Shape(Empty, Offset.Zero)
         } else {
             existingShape
         }
@@ -187,7 +187,7 @@ fun List<Shape>.shiftDown(): List<Shape> {
  */
 fun List<Shape>.replaceEmptiesWithRandoms() =
     map {
-        if (it == Empty) {
+        if (it.shapeType == Empty) {
             randomShape()
         } else {
             it
@@ -200,10 +200,10 @@ private val random = Random(System.currentTimeMillis())
  * Create a random shape. Note that you'll need to replace these with your shapes
  */
 fun randomShape() = when(random.nextInt(4)) {
-    0 -> Square
-    1 -> Circle
-    2 -> Cross
-    else -> Diamond
+    0 -> Shape(Square, Offset.Zero)
+    1 -> Shape(Circle, Offset.Zero)
+    2 -> Shape(Cross, Offset.Zero)
+    else -> Shape(Diamond, Offset.Zero)
 }
 
 //fun randomShape() = when(random.nextInt(1)) {

@@ -7,20 +7,25 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
+import androidx.compose.foundation.gestures.drag
+import androidx.compose.foundation.gestures.forEachGesture
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.*
+import androidx.compose.ui.input.pointer.PointerInputChange
+import androidx.compose.ui.input.pointer.PointerInputScope
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntSize
@@ -51,6 +56,10 @@ class MainActivity : ComponentActivity() {
 data class Handlers(
     val onAddScore: (points: Int) -> Unit,
     val gameLogic: (shapeList: List<Shape>) -> Unit,
+//    val onDragStart: (finger: Offset, size: Float) -> Unit,
+//    val onDrag: (Offset) -> Unit,
+//    val onDragEnd: () -> Unit,
+    val onHighLightShape: (finger: Offset, size: Float) -> Unit,
 )
 
 @Composable
@@ -59,7 +68,8 @@ fun Ui(
 ) {
     val scope = rememberCoroutineScope()
     val score = viewModel.score.collectAsState(initial = 0).value
-    val shapes = viewModel.shapes.collectAsState(initial = List(64){Empty}).value
+    val shapes by viewModel.shapes.collectAsState(initial = List(64){Shape(Empty, Offset.Zero)})
+    val highlightShapeType by viewModel.highlightShapeType.collectAsState(initial = null)
 
 //    val location = shapeIndex(0, 0)
 //    val test = shapes[1, 1]
@@ -72,6 +82,14 @@ fun Ui(
                     scope.launch {
                         viewModel.gameLogic(shapeList)
                     }
+            },
+//            onDragStart = { finger, size -> viewModel.startDrag(finger, size) },
+//            onDrag = { offset -> viewModel.drag(offset) },
+//            onDragEnd = { viewModel.endDrag() },
+            onHighLightShape = { finger, size ->
+                scope.launch{
+                    viewModel.highlightShape(finger, size)
+                }
             }
         )
     }
@@ -82,6 +100,7 @@ fun Ui(
         shapes = shapes,
         handlers = handlers,
         updateGems = viewModel::updateGems,
+        highlightShapeType = highlightShapeType,
 //        updateShapes = viewModel::updateShapes,
         modifier = Modifier.fillMaxSize()
     )
@@ -96,6 +115,7 @@ fun Graph(
     shapes: List<Shape>,
     updateGems: (List<Shape>) -> Unit,
     handlers: Handlers,
+    highlightShapeType: ShapeType?,
 //    updateShapes: (newShapes: List<Shape>) -> Unit,
     modifier: Modifier
 ) {
@@ -104,12 +124,14 @@ fun Graph(
 //        const val NUMBER_OF_ROWS = 8
 //        val scope = rememberCoroutineScope()
 
-        fun DrawScope.drawCircle(x: Float, y: Float, outlineColor: Color, shapeOffsetPx: Float, shapeCenter: Offset, radius: Float, outline: DrawStyle) {
-            translate(x + shapeOffsetPx, y + shapeOffsetPx) {
-                drawCircle(color = Color.Green, center = shapeCenter, radius = radius, style = Fill)
-                drawCircle(color = outlineColor, center = shapeCenter, radius = radius, style = outline)
-            }
-        }
+        var finger by remember { mutableStateOf(Offset.Zero) }
+
+//        fun DrawScope.drawCircle(x: Float, y: Float, outlineColor: Color, shapeOffsetPx: Float, shapeCenter: Offset, radius: Float, outline: DrawStyle) {
+//            translate(x + shapeOffsetPx, y + shapeOffsetPx) {
+//                drawCircle(color = Color.Green, center = shapeCenter, radius = radius, style = Fill)
+//                drawCircle(color = outlineColor, center = shapeCenter, radius = radius, style = outline)
+//            }
+//        }
 
 //        val testList = List(5) {Circle}
 //        val currentPosition = testList[0,0]
@@ -172,6 +194,17 @@ fun Graph(
                         Canvas(
                             modifier = Modifier
                                 .fillMaxSize()
+                                .pointerInput(handlers) {
+                                    detectTapDragGestures(
+                                        onTap = {
+                                            Log.d("OnTap", "")
+                                            finger = it
+                                            handlers.onHighLightShape(
+                                                finger, min(size.width, size.height)/10f
+                                            )
+                                        }
+                                    )
+                                }
 //                                .height(100.dp)
                             //                            .padding(vertical = 50.dp)
                         ) {
@@ -214,7 +247,7 @@ fun Graph(
 //                            val currentPosition = shapes.get(0, 0)
 //                            Log.d("Current Position", currentPosition.toString())
 
-                            val outlineColor = Color.Black
+//                            val outlineColor = Color.Black
 
 //                            var newList = shapes.replaceEmptiesWithRandoms()
 
@@ -277,11 +310,32 @@ fun Graph(
 //                                            Log.d("Inside", row.toString())
 //                                            val currentPosition = shapes.get(row, column)
 //                                            Log.d("Shape", currentPosition.toString())
-                                            when(shapes[row+1, column+1]) {
-                                                Circle -> drawCircle(color = Color.Yellow, center = shapeCenter, radius = radius)
-                                                Square ->  drawRect(color = Color.Blue, size = Size(shapeSize, shapeSize), topLeft = Offset(shapeOffset, shapeOffset))
-                                                Diamond -> drawRect(color = Color.Red, size = Size(shapeSize, shapeSize), topLeft = Offset(shapeOffset, shapeOffset))
-                                                Cross -> drawCircle(color = Color.Green, center = shapeCenter, radius = radius)
+                                            val shape = shapes[row+1, column+1]
+                                            when(shape.shapeType) {
+                                                Circle -> {
+                                                    val outlineColor =
+                                                        if (shape.shapeType == highlightShapeType) Color.Magenta else Color.Black
+                                                    drawCircle(color = Color.Yellow, center = shapeCenter, radius = radius)
+                                                    drawCircle(color = outlineColor, center = shapeCenter, radius = radius, style = outline)
+                                                }
+                                                Square ->  {
+                                                    val outlineColor =
+                                                        if (shape.shapeType == highlightShapeType) Color.Magenta else Color.Black
+                                                    drawRect(color = Color.Blue, size = Size(shapeSize, shapeSize), topLeft = Offset(shapeOffset, shapeOffset))
+                                                    drawRect(color = outlineColor, size = Size(shapeSize, shapeSize), topLeft = Offset(shapeOffset, shapeOffset), style = outline)
+                                                }
+                                                Diamond -> {
+                                                    val outlineColor =
+                                                        if (shape.shapeType == highlightShapeType) Color.Magenta else Color.Black
+                                                    drawRect(color = Color.Red, size = Size(shapeSize, shapeSize), topLeft = Offset(shapeOffset, shapeOffset))
+                                                    drawRect(color = outlineColor, size = Size(shapeSize, shapeSize), topLeft = Offset(shapeOffset, shapeOffset), style = outline)
+                                                }
+                                                Cross -> {
+                                                    val outlineColor =
+                                                        if (shape.shapeType == highlightShapeType) Color.Magenta else Color.Black
+                                                    drawCircle(color = Color.Green, center = shapeCenter, radius = radius)
+                                                    drawCircle(color = outlineColor, center = shapeCenter, radius = radius, style = outline)
+                                                }
                                                 Empty -> {}
                                             }
 //                                            Log.d("Inside", row.toString())
@@ -338,5 +392,64 @@ fun Graph(
                 }
             }
         )
+    }
+}
+
+// Gesture detector for taps and drags
+// Copied from DragGestureDetector.kt in Jetpack Compose
+// LICENSE: Apache 2.0
+/*
+ * Copyright 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+suspend fun PointerInputScope.detectTapDragGestures(
+    onTap: (Offset) -> Unit = {},
+    onDragStart: (Offset) -> Unit = { },
+    onDragEnd: () -> Unit = { },
+    onDragCancel: () -> Unit = { },
+    onDrag: (change: PointerInputChange, dragAmount: Offset) -> Unit = { _, _ ->}
+) {
+    forEachGesture {
+        awaitPointerEventScope {
+            val down = awaitFirstDown(requireUnconsumed = false)
+            var drag: PointerInputChange?
+            var overSlop = Offset.Zero
+            do {
+                drag = awaitTouchSlopOrCancellation(
+                    down.id,
+//                    down.type
+                ) { change, over ->
+                    change.consume()
+                    overSlop = over
+                }
+            } while (drag != null && !drag.isConsumed)
+            if (drag != null) {
+                onDragStart.invoke(down.position) // Changed to down instead of drag
+                onDrag(drag, overSlop)
+                if (
+                    !drag(drag.id) {
+                        onDrag(it, it.positionChange())
+                        it.consume()
+                    }
+                ) {
+                    onDragCancel()
+                } else {
+                    onDragEnd()
+                }
+            } else {                    // ADDED
+                onTap(down.position)    // ADDED
+            }
+        }
     }
 }
