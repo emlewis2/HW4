@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.*
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.PointerInputScope
@@ -154,6 +155,40 @@ fun Gems(
         var finger by remember { mutableStateOf(Offset.Zero) }
 
         var paused by remember { mutableStateOf(FALSE) }
+
+        fun DrawScope.drawDiamond(outlineColor: Color, shapeSize: Float, boxSize: Float, outline: Stroke) {
+            val shapeOffset = (boxSize - shapeSize)/2
+            val diamondPath = Path().apply {
+                moveTo(boxSize/2, shapeOffset)
+                lineTo(shapeSize+shapeOffset, boxSize/2)
+                lineTo(boxSize/2, shapeSize+shapeOffset)
+                lineTo(shapeOffset, boxSize/2)
+                close()
+            }
+            drawPath(path = diamondPath, color = Color.Red)
+            drawPath(path = diamondPath, color = outlineColor, style = outline)
+        }
+
+        fun DrawScope.drawCross(outlineColor: Color, shapeSize: Float, boxSize: Float, outline: Stroke) {
+            val shapeOffset = (boxSize - shapeSize)/2
+            val crossPath = Path().apply {
+                moveTo(shapeOffset+shapeSize/3, shapeOffset)
+                lineTo(shapeOffset+shapeSize*2/3, shapeOffset)
+                lineTo(shapeOffset+shapeSize*2/3, shapeOffset+shapeSize/3)
+                lineTo(shapeOffset+shapeSize, shapeOffset+shapeSize/3)
+                lineTo(shapeOffset+shapeSize, shapeOffset+shapeSize*2/3)
+                lineTo(shapeOffset+shapeSize*2/3, shapeOffset+shapeSize*2/3)
+                lineTo(shapeOffset+shapeSize*2/3, shapeOffset+shapeSize)
+                lineTo(shapeOffset+shapeSize/3, shapeOffset+shapeSize)
+                lineTo(shapeOffset+shapeSize/3, shapeOffset+shapeSize*2/3)
+                lineTo(shapeOffset, shapeOffset+shapeSize*2/3)
+                lineTo(shapeOffset, shapeOffset+shapeSize/3)
+                lineTo(shapeOffset+shapeSize/3, shapeOffset+shapeSize/3)
+                close()
+            }
+            drawPath(path = crossPath, color = Color.Green)
+            drawPath(path = crossPath, color = outlineColor, style = outline)
+        }
 
 //        fun DrawScope.drawCircle(x: Float, y: Float, outlineColor: Color, shapeOffsetPx: Float, shapeCenter: Offset, radius: Float, outline: DrawStyle) {
 //            translate(x + shapeOffsetPx, y + shapeOffsetPx) {
@@ -384,14 +419,14 @@ fun Gems(
                                                 Diamond -> {
                                                     val outlineColor =
                                                         if (shape.shapeType == highlightShapeType) Color.Magenta else Color.Black
-                                                    drawRect(color = Color.Red, size = Size(shapeSize, shapeSize), topLeft = Offset(shapeOffset, shapeOffset))
-                                                    drawRect(color = outlineColor, size = Size(shapeSize, shapeSize), topLeft = Offset(shapeOffset, shapeOffset), style = outline)
+                                                    drawDiamond(outlineColor, shapeSize, boxSize, outline)
+//                                                    drawRect(color = Color.Red, size = Size(shapeSize, shapeSize), topLeft = Offset(shapeOffset, shapeOffset))
+//                                                    drawRect(color = outlineColor, size = Size(shapeSize, shapeSize), topLeft = Offset(shapeOffset, shapeOffset), style = outline)
                                                 }
                                                 Cross -> {
                                                     val outlineColor =
                                                         if (shape.shapeType == highlightShapeType) Color.Magenta else Color.Black
-                                                    drawCircle(color = Color.Green, center = shapeCenter, radius = radius)
-                                                    drawCircle(color = outlineColor, center = shapeCenter, radius = radius, style = outline)
+                                                    drawCross(outlineColor, shapeSize, boxSize, outline)
                                                 }
                                                 Empty -> {}
                                             }
