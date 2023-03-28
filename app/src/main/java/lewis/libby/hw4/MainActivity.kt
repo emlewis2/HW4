@@ -7,6 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
 import androidx.compose.foundation.gestures.drag
@@ -17,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -28,11 +30,13 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.*
 import lewis.libby.hw4.ui.theme.HW4Theme
+import java.lang.Boolean.FALSE
 import kotlin.math.min
 import kotlin.math.sqrt
 
@@ -75,6 +79,7 @@ fun Ui(
     val shapes by viewModel.shapes.collectAsState(initial = List(64){Shape(Empty, Offset.Zero)})
     val highlightShapeType by viewModel.highlightShapeType.collectAsState(initial = null)
 
+
 //    val location = shapeIndex(0, 0)
 //    val test = shapes[1, 1]
 //    Log.d("Test above", test.toString())
@@ -102,22 +107,36 @@ fun Ui(
         )
     }
 
-    Graph(
-        scope = scope,
-        score = score,
-        shapes = shapes,
-        handlers = handlers,
-        updateGems = viewModel::updateGems,
-        highlightShapeType = highlightShapeType,
+    when(val screen = viewModel.screen) {
+        is GemScreen -> Gems(
+            scope = scope,
+            score = score,
+            shapes = shapes,
+            handlers = handlers,
+            updateGems = viewModel::updateGems,
+            highlightShapeType = highlightShapeType,
 //        updateShapes = viewModel::updateShapes,
-        modifier = Modifier.fillMaxSize()
-    )
+            modifier = Modifier.fillMaxSize()
+        )
+        is PauseScreen -> Pause(viewModel::onPlay)
+    }
+
+//    Gems(
+//        scope = scope,
+//        score = score,
+//        shapes = shapes,
+//        handlers = handlers,
+//        updateGems = viewModel::updateGems,
+//        highlightShapeType = highlightShapeType,
+////        updateShapes = viewModel::updateShapes,
+//        modifier = Modifier.fillMaxSize()
+//    )
 
 //    handlers.gameLogic(shapes)
 }
 
 @Composable
-fun Graph(
+fun Gems(
     scope: CoroutineScope,
     score: Int,
     shapes: List<Shape>,
@@ -133,6 +152,8 @@ fun Graph(
 //        val scope = rememberCoroutineScope()
 
         var finger by remember { mutableStateOf(Offset.Zero) }
+
+        var paused by remember { mutableStateOf(FALSE) }
 
 //        fun DrawScope.drawCircle(x: Float, y: Float, outlineColor: Color, shapeOffsetPx: Float, shapeCenter: Offset, radius: Float, outline: DrawStyle) {
 //            translate(x + shapeOffsetPx, y + shapeOffsetPx) {
@@ -488,4 +509,49 @@ suspend fun PointerInputScope.detectTapDragGestures(
             }
         }
     }
+}
+
+@Composable
+fun Pause(
+    onClick: () -> Unit,
+) {
+//    Text(
+//        text = "Hello",
+//        modifier = Modifier
+//            .padding(8.dp)
+//    )
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.title)) },
+            )
+        },
+        content = { padding ->
+            Column(
+                modifier = Modifier
+                    .padding()
+                    .fillMaxSize()
+                    .clickable {
+                        onClick()
+                    }
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+//                        .padding(vertical = 50.dp)
+//                        .clickable {
+//                            onClick()
+//                        }
+                ) {
+                    Text(
+                        text = "Paused",
+                        fontSize = 65.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+    )
 }

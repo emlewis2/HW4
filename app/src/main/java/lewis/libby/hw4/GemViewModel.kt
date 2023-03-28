@@ -1,15 +1,32 @@
 package lewis.libby.hw4
 
+import android.app.Application
 import android.util.Log
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
+sealed interface Screen
+
+object GemScreen: Screen
+
+object PauseScreen: Screen
+
 class GemViewModel: ViewModel() {
+    var screen by mutableStateOf<Screen>(GemScreen)
+        private set
+
+//    var screen by mutableStateOf<Screen>(GemScreen)
+//        private set
+
     private val _highlightShapeType = MutableStateFlow<ShapeType?>(null)
     val highlightShapeType: Flow<ShapeType?>
         get() = _highlightShapeType
@@ -211,5 +228,10 @@ class GemViewModel: ViewModel() {
     fun onPause() {
         val yes = "hi"
         Log.d("On Pause", yes)
+        this.screen = PauseScreen
+    }
+
+    fun onPlay() {
+        this.screen = GemScreen
     }
 }
