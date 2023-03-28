@@ -159,16 +159,16 @@ fun Graph(
             topBar = {
                 TopAppBar(
                     title = { Text(stringResource(R.string.title)) },
-                    actions = {
-                        IconButton(
-                            onClick = { handlers.onAddScore(5) }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = "add"
-                            )
-                        }
-                    }
+//                    actions = {
+//                        IconButton(
+//                            onClick = { handlers.onAddScore(5) }
+//                        ) {
+//                            Icon(
+//                                imageVector = Icons.Default.Add,
+//                                contentDescription = "add"
+//                            )
+//                        }
+//                    }
                 )
             },
             content = { padding ->
@@ -190,7 +190,7 @@ fun Graph(
                             "Score: $score",
                             //                            textAlign = TextAlign.Center,
                             //                        modifier = Modifier.width(150.dp),
-                            fontSize = 75.sp,
+                            fontSize = 65.sp,
                             //                            modifier = Modifier.padding(16.dp)
                         )
                         //                    }
@@ -249,19 +249,19 @@ fun Graph(
 
                             val shapeCenter = Offset(boxSize/2, boxSize/2)
 
-                            drawRect(color = Color.Gray, topLeft = Offset.Zero)
+//                            drawRect(color = Color.Gray, topLeft = Offset.Zero)
 
-                            drawLine(
-                                start = Offset(x = size.width, y = 0f),
-                                end = Offset(x = 0f, y = size.height),
-                                color = Color.Blue
-                            )
-
-                            drawLine(
-                                start = Offset(x = 0f, y = 0f),
-                                end = Offset(x = size.width/10, 0f),
-                                color = Color.Red,
-                            )
+//                            drawLine(
+//                                start = Offset(x = size.width, y = 0f),
+//                                end = Offset(x = 0f, y = size.height),
+//                                color = Color.Blue
+//                            )
+//
+//                            drawLine(
+//                                start = Offset(x = 0f, y = 0f),
+//                                end = Offset(x = size.width/10, 0f),
+//                                color = Color.Red,
+//                            )
 
 //                            fun Size.toIntSize(): IntSize = IntSize(width.toInt(), height.toInt())
 //
@@ -340,8 +340,8 @@ fun Graph(
                                 for (row in 0 until 8) {
                                     for (column in 0 until 8) {
                                         translate(
-                                            left = row * boxSize,
-                                            top = column * boxSize
+                                            left = column * boxSize,
+                                            top = row * boxSize
                                         ) {
 //                                            Log.d("Inside", row.toString())
 //                                            val currentPosition = shapes.get(row, column)

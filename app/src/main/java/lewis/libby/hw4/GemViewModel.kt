@@ -111,12 +111,12 @@ class GemViewModel: ViewModel() {
         Log.d("intX", intOffsetX.toString())
         val intOffsetY = finger.y.toInt()
         Log.d("intY", intOffsetY.toString())
-        val row = intOffsetX / size.toInt()
+        val row = intOffsetY / size.toInt()
         Log.d("row", row.toString())
-        val column = intOffsetY / size.toInt()
+        val column = intOffsetX / size.toInt()
         Log.d("column", column.toString())
-        if (row in 1..8 && column >= 0 && column <= 7) {
-            _shapes.value[row, column+1].let { shape ->
+        if (row in 0..7 && column >= 1 && column <= 8) {
+            _shapes.value[row+1, column].let { shape ->
                 dragShape = shape
                 dragShapeOffset = finger
                 dragShapeRow = row
@@ -154,15 +154,15 @@ class GemViewModel: ViewModel() {
         Log.d("intX", intOffsetX.toString())
         val intOffsetY = offset.y.toInt()
         Log.d("intY", intOffsetY.toString())
-        val row = intOffsetX / size.toInt()
+        val row = intOffsetY / size.toInt()
         Log.d("row", row.toString())
-        val column = intOffsetY / size.toInt()
+        val column = intOffsetX / size.toInt()
         Log.d("column", column.toString())
-        if (row in 1..8 && column >= 0 && column <= 7) {
-            _shapes.value[row, column+1].let { shape ->
+        if (row in 0..7 && column >= 1 && column <= 8) {
+            _shapes.value[row+1, column].let { shape ->
                 Log.d("DragShape", dragShape?.shapeType.toString())
-                _shapes.value = _shapes.value.replace(row, column+1, dragShape ?: Shape(Empty, Offset.Zero))
-                _shapes.value = _shapes.value.replace(dragShapeRow, dragShapeColumn+1, shape)
+                _shapes.value = _shapes.value.replace(row+1, column, dragShape ?: Shape(Empty, Offset.Zero))
+                _shapes.value = _shapes.value.replace(dragShapeRow+1, dragShapeColumn, shape)
                 Log.d("Other Shape", shape.shapeType.toString())
             }
         }
@@ -187,12 +187,12 @@ class GemViewModel: ViewModel() {
         Log.d("intX", intOffsetX.toString())
         val intOffsetY= finger.y.toInt()
         Log.d("intY", intOffsetY.toString())
-        val row = intOffsetX / size.toInt()
+        val row = intOffsetY / size.toInt()
         Log.d("row", row.toString())
-        val column = intOffsetY / size.toInt()
+        val column = intOffsetX / size.toInt()
         Log.d("column", column.toString())
-        if (row in 1..8 && column >= 0 && column <= 7) {
-            _shapes.value[row, column+1].let {shape ->
+        if (row in 0..7 && column >= 1 && column <= 8) {
+            _shapes.value[row+1, column].let {shape ->
                 repeat(3) {
                     Log.d("Shape: ", shape.toString())
 //                    Log.d("Location: ", _shapes.value[row+1, column].toString())
