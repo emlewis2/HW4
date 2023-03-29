@@ -2,10 +2,11 @@ package lewis.libby.hw4
 
 // Helper File from JHU Course EN.605.686.81.SP23 by Scott Stanchfield
 
+// Minor edits throughout
+
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.geometry.Offset
-import kotlinx.coroutines.delay
-import kotlin.random.Random // (must be at top of file after package statement)
+import kotlin.random.Random
 
 /**
  * Number of rows in the grid. Note that we assume the grid is square (i.e. has the same number
@@ -21,6 +22,8 @@ const val NUMBER_OF_ROWS = 8
  * You need to define your own shapes rather than the ones I have below, but be sure to keep
  *    [Empty]
  */
+
+// Changed Shape interface to ShapeType
 sealed interface ShapeType
 object Square: ShapeType
 object Circle: ShapeType
@@ -28,13 +31,12 @@ object Cross: ShapeType
 object Diamond: ShapeType
 object Empty: ShapeType
 
+// Added Shape class and updated functions throughout helper file accordingly
 @Immutable
 data class Shape(
     val shapeType: ShapeType,
     val offset: Offset
 )
-
-// Removed Shape Types to put in separate file
 
 // The functions in this file assume that the grid of shapes is represented by a `List<Shape>`
 //    that is sized `NUMBER_OF_ROWS * NUMBER_OF_ROWS`. [Empty] is used to mark spots in the
@@ -179,7 +181,6 @@ fun List<Shape>.shiftDown(): List<Shape> {
         } else {
             existingShape
         }
-//        delay(500)
     }
 
 /**
@@ -205,8 +206,3 @@ fun randomShape() = when(random.nextInt(4)) {
     2 -> Shape(Cross, Offset.Zero)
     else -> Shape(Diamond, Offset.Zero)
 }
-
-//fun randomShape() = when(random.nextInt(1)) {
-//    0 -> Circle
-//    else -> Square
-//}
