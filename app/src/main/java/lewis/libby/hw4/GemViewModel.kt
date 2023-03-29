@@ -276,6 +276,12 @@ class GemViewModel: ViewModel() {
             _shapes.value = _shapes.value.replace(dragShapeRow+1, dragShapeColumn, shape)
             Log.d("Other Shape", shape.shapeType.toString())
         }
+        if (_shapes.value.matches.isEmpty()) {
+            _shapes.value[dragShapeRow+1, dragShapeColumn].let { shape ->
+                _shapes.value = _shapes.value.replace(row+1, column, shape)
+                _shapes.value = _shapes.value.replace(dragShapeRow+1, dragShapeColumn, dragShape ?: Shape(Empty, Offset.Zero))
+            }
+        }
         dragShape = null
         dragShapeColumn = 0
         dragShapeRow = 0
