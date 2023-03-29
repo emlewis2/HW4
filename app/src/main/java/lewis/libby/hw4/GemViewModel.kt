@@ -26,6 +26,10 @@ class GemViewModel: ViewModel() {
 
     var shuffleFlag = 0
 
+    private val _drag = MutableStateFlow<Shape>(Shape(Empty, Offset.Zero))
+    val drag: Flow<Shape>
+        get() = _drag
+
 //    var screen by mutableStateOf<Screen>(GemScreen)
 //        private set
 
@@ -137,7 +141,8 @@ class GemViewModel: ViewModel() {
         if (row in 0..7 && column >= 1 && column <= 8) {
             _shapes.value[row+1, column].let { shape ->
                 dragShape = shape
-                dragShapeOffset = finger
+                _drag.value = shape
+                dragShapeOffset = finger - shape.offset
                 dragShapeRow = row
                 dragShapeColumn = column
             }
@@ -149,7 +154,7 @@ class GemViewModel: ViewModel() {
     fun drag(offset: Offset) {
         dragShape?.let { shape ->
             val newShape = shape.copy(offset = offset - dragShapeOffset)
-
+            _drag.value = newShape
 //            _shapes.value = _shapes.value - shape + newShape
             dragShape = newShape    // Need to update to newShape as the new instance or else are never removing the new shapes that are added
         }
@@ -210,6 +215,7 @@ class GemViewModel: ViewModel() {
         dragShape = null
         dragShapeColumn = 0
         dragShapeRow = 0
+        _drag.value = Shape(Empty, Offset.Zero)
     }
 
     private fun List<Shape>.findAt(offset:Offset, shapeBoxSizePx: Float) =
@@ -285,5 +291,12 @@ class GemViewModel: ViewModel() {
         dragShape = null
         dragShapeColumn = 0
         dragShapeRow = 0
+    }
+
+    fun setOffset(row: Int, column: Int, boxSize: Float) {
+        _shapes.value[row+1, column+1].let {shape ->
+            _shapes.value = _shapes.value.replace(row+1, column+1, Shape(shape.shapeType, Offset(column*boxSize, row*boxSize)))
+
+        }
     }
 }

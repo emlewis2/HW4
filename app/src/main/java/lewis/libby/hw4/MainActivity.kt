@@ -79,7 +79,7 @@ fun Ui(
     val score = viewModel.score.collectAsState(initial = 0).value
     val shapes by viewModel.shapes.collectAsState(initial = List(64){Shape(Empty, Offset.Zero)})
     val highlightShapeType by viewModel.highlightShapeType.collectAsState(initial = null)
-
+    val drag by viewModel.drag.collectAsState(initial = Shape(Empty, Offset.Zero))
 
 //    val location = shapeIndex(0, 0)
 //    val test = shapes[1, 1]
@@ -113,9 +113,11 @@ fun Ui(
             scope = scope,
             score = score,
             shapes = shapes,
+            drag = drag,
             handlers = handlers,
             updateGems = viewModel::updateGems,
             highlightShapeType = highlightShapeType,
+            setOffset = viewModel::setOffset,
 //        updateShapes = viewModel::updateShapes,
             modifier = Modifier.fillMaxSize()
         )
@@ -141,9 +143,11 @@ fun Gems(
     scope: CoroutineScope,
     score: Int,
     shapes: List<Shape>,
+    drag: Shape,
     updateGems: (List<Shape>) -> Unit,
     handlers: Handlers,
     highlightShapeType: ShapeType?,
+    setOffset: (Int, Int, Float) -> Unit,
 //    updateShapes: (newShapes: List<Shape>) -> Unit,
     modifier: Modifier
 ) {
@@ -154,7 +158,7 @@ fun Gems(
 
         var finger by remember { mutableStateOf(Offset.Zero) }
 
-        var paused by remember { mutableStateOf(FALSE) }
+//        var paused by remember { mutableStateOf(FALSE) }
 
         fun DrawScope.drawDiamond(outlineColor: Color, shapeSize: Float, boxSize: Float, outline: Stroke) {
             val shapeOffset = (boxSize - shapeSize)/2
@@ -243,7 +247,7 @@ fun Gems(
                         //                        horizontalAlignment = Alignment.CenterHorizontally
                         //                    ) {
                         Text(
-                            "Score: $score",
+                            text = "${stringResource(R.string.score)} $score",
                             //                            textAlign = TextAlign.Center,
                             //                        modifier = Modifier.width(150.dp),
                             fontSize = 65.sp,
@@ -403,6 +407,7 @@ fun Gems(
 //                                            val currentPosition = shapes.get(row, column)
 //                                            Log.d("Shape", currentPosition.toString())
                                             val shape = shapes[row+1, column+1]
+                                            setOffset(row, column, boxSize)
                                             when(shape.shapeType) {
                                                 Circle -> {
                                                     val outlineColor =
@@ -437,6 +442,49 @@ fun Gems(
                                         }
                                     }
                                 }
+                            }
+
+                            when(drag.shapeType) {
+                                Circle -> {
+                                    val outlineColor =
+                                        if (drag.shapeType == highlightShapeType) Color.Magenta else Color.Black
+                                    translate(left = boxSize + drag.offset.x, top = drag.offset.y) {
+                                        drawCircle(color = Color.Yellow, center = shapeCenter, radius = radius)
+                                        drawCircle(color = outlineColor, center = shapeCenter, radius = radius, style = outline)
+                                    }
+//                                    drawCircle(color = Color.Yellow, center = shapeCenter, radius = radius)
+//                                    drawCircle(color = outlineColor, center = shapeCenter, radius = radius, style = outline)
+                                }
+                                Square ->  {
+                                    val outlineColor =
+                                        if (drag.shapeType == highlightShapeType) Color.Magenta else Color.Black
+//                                    translate(left = boxSize + drag.offset.x, top = drag.offset.y) {
+                                        drawRect(color = Color.Blue, size = Size(shapeSize, shapeSize), topLeft = Offset(drag.offset.x + boxSize, drag.offset.y))
+                                        drawRect(color = outlineColor, size = Size(shapeSize, shapeSize), topLeft = Offset(drag.offset.x + boxSize, drag.offset.y), style = outline)
+//                                    }
+//                                    drawRect(color = Color.Blue, size = Size(shapeSize, shapeSize), topLeft = drag.offset)
+//                                    drawRect(color = outlineColor, size = Size(shapeSize, shapeSize), topLeft = drag.offset, style = outline)
+                                }
+                                Diamond -> {
+                                    val outlineColor =
+                                        if (drag.shapeType == highlightShapeType) Color.Magenta else Color.Black
+                                    translate(left = boxSize + drag.offset.x, top = drag.offset.y) {
+                                        drawDiamond(outlineColor, shapeSize, boxSize, outline)
+                                    }
+//                                    drawDiamond(outlineColor, shapeSize, boxSize, outline)
+//                                                    drawRect(color = Color.Red, size = Size(shapeSize, shapeSize), topLeft = Offset(shapeOffset, shapeOffset))
+//                                                    drawRect(color = outlineColor, size = Size(shapeSize, shapeSize), topLeft = Offset(shapeOffset, shapeOffset), style = outline)
+                                }
+                                Cross -> {
+                                    val outlineColor =
+                                        if (drag.shapeType == highlightShapeType) Color.Magenta else Color.Black
+                                    translate(left = boxSize + drag.offset.x, top = drag.offset.y) {
+                                        drawCross(outlineColor, shapeSize, boxSize, outline)
+
+                                    }
+//                                    drawCross(outlineColor, shapeSize, boxSize, outline)
+                                }
+                                Empty -> {}
                             }
 
 
@@ -581,7 +629,7 @@ fun Pause(
 //                        }
                 ) {
                     Text(
-                        text = "Paused",
+                        text = stringResource(R.string.paused),
                         fontSize = 65.sp,
                         textAlign = TextAlign.Center
                     )
