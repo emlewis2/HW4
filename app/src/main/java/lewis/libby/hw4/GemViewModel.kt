@@ -24,6 +24,8 @@ class GemViewModel: ViewModel() {
     var screen by mutableStateOf<Screen>(GemScreen)
         private set
 
+    var shuffleFlag = 0
+
 //    var screen by mutableStateOf<Screen>(GemScreen)
 //        private set
 
@@ -139,6 +141,8 @@ class GemViewModel: ViewModel() {
                 dragShapeRow = row
                 dragShapeColumn = column
             }
+        } else {
+            shuffleFlag = 1
         }
     }
 
@@ -152,18 +156,29 @@ class GemViewModel: ViewModel() {
     }
 
     fun endDrag(offset: Offset, size: Float) {
+        var rightBound = 0f
+        var leftBound = 0f
+        var topBound = 0f
+        var bottomBound = 0f
         if (dragShapeColumn == 8) {
-            val rightBound = size*(dragShapeColumn+1)
+            rightBound = size*(dragShapeColumn)
         } else {
-            val rightBound = size*(dragShapeColumn+2)
+            rightBound = size*(dragShapeColumn+1)
         }
         if (dragShapeColumn == 1) {
-            val leftBound = size*(dragShapeColumn)
+            leftBound = size*(dragShapeColumn)
         } else {
-            val leftBound = size*(dragShapeColumn-1)
+            leftBound = size*(dragShapeColumn-1)
         }
-        if (dragShapeRow == 1) {
-//            val topBound = size*
+        if (dragShapeRow == 0) {
+            topBound = size*0f
+        } else {
+            topBound = size*(dragShapeRow)
+        }
+        if (dragShapeRow ==7) {
+            bottomBound = size*(dragShapeRow)
+        } else {
+            bottomBound = size*(dragShapeRow+1)
         }
         Log.d("In highlight", "")
         Log.d("finger", offset.toString())
@@ -176,14 +191,25 @@ class GemViewModel: ViewModel() {
         val column = intOffsetX / size.toInt()
         Log.d("column", column.toString())
         if (row in 0..7 && column >= 1 && column <= 8) {
-            _shapes.value[row+1, column].let { shape ->
-                Log.d("DragShape", dragShape?.shapeType.toString())
-                _shapes.value = _shapes.value.replace(row+1, column, dragShape ?: Shape(Empty, Offset.Zero))
-                _shapes.value = _shapes.value.replace(dragShapeRow+1, dragShapeColumn, shape)
-                Log.d("Other Shape", shape.shapeType.toString())
+            if (row == dragShapeRow-1 && column == dragShapeColumn) {
+                switchShapes(row, column)
+            } else if (row == dragShapeRow+1 && column == dragShapeColumn) {
+                switchShapes(row, column)
+            } else if (row == dragShapeRow && column == dragShapeColumn+1) {
+                switchShapes(row, column)
+            } else if (row == dragShapeRow && column == dragShapeColumn-1) {
+                switchShapes(row, column)
             }
+        } else if (shuffleFlag == 1){
+            dragShape = null
+            dragShapeColumn = 0
+            dragShapeRow = 0
+            shuffleFlag = 0
+            shuffleGems()
         }
         dragShape = null
+        dragShapeColumn = 0
+        dragShapeRow = 0
     }
 
     private fun List<Shape>.findAt(offset:Offset, shapeBoxSizePx: Float) =
@@ -233,5 +259,25 @@ class GemViewModel: ViewModel() {
 
     fun onPlay() {
         this.screen = GemScreen
+    }
+
+    private fun shuffleGems() {
+        Log.d("In shuffle", "")
+        val newList = (List(64){Shape(Empty, Offset.Zero)})
+        newList.replaceEmptiesWithRandoms()
+        _shapes.update { newList }
+        _score.value = _score.value - 10
+    }
+
+    private fun switchShapes(row: Int, column: Int) {
+        _shapes.value[row+1, column].let { shape ->
+            Log.d("DragShape", dragShape?.shapeType.toString())
+            _shapes.value = _shapes.value.replace(row+1, column, dragShape ?: Shape(Empty, Offset.Zero))
+            _shapes.value = _shapes.value.replace(dragShapeRow+1, dragShapeColumn, shape)
+            Log.d("Other Shape", shape.shapeType.toString())
+        }
+        dragShape = null
+        dragShapeColumn = 0
+        dragShapeRow = 0
     }
 }
